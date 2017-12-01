@@ -1,0 +1,4 @@
+*.elf
+*.nds
+build/
+maker.sh
