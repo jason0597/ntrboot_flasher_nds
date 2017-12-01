@@ -1,0 +1,6 @@
+[submodule "external/flashcart_core"]
+	path = external/flashcart_core
+	url = https://github.com/ntrteam/flashcart_core
+[submodule "external/libncgc"]
+	path = external/libncgc
+	url = https://github.com/angelsl/libncgc
