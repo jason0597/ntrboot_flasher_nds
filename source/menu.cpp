@@ -177,64 +177,32 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 
 //Will print out a gm9/sb9si like "input button combo to continue" prompt, also does the button checking for it
 //Requires #include <ctime> for the rand() seed
+
+const char rancombo_symbols[5] = {'\x1B', '\x18', '\x1A', '\x19', 'A'}; // Left, Up, Right, Down
+const u32 rancombo_inputs[5] = {KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_A};
+
 bool d0k3_buttoncombo(int cur_c, int cur_r) 
 {
     cur_c *= FONT_WIDTH; cur_r *= FONT_HEIGHT;
     srand(time(NULL));
-    int num_rancombo[4] = { (rand() % 4), (rand() % 4), (rand() % 4), (rand() % 4) };
-    char print_rancombo[4] = { ' ', ' ', ' ', ' ' };
-    for (int i = 0; i < 4; i++) {
-        if (num_rancombo[i] == 0) { print_rancombo[i] = '\x1B'; } //Left
-        if (num_rancombo[i] == 1) { print_rancombo[i] = '\x18'; } //Up
-        if (num_rancombo[i] == 2) { print_rancombo[i] = '\x1A'; } //Right
-        if (num_rancombo[i] == 3) { print_rancombo[i] = '\x19'; } //Down
+    int num_rancombo[5] = { (rand() % 4), (rand() % 4), (rand() % 4), (rand() % 4), 4 }; // zero based, '4' is the 5th item (A)
+    char print_rancombo[5] = { ' ', ' ', ' ', ' ', ' ' };
+    u32 check_rancombo[5] = { 0, 0, 0, 0, 0 };
+    for (int i = 0; i < 5; i++) {
+        print_rancombo[i] = rancombo_symbols[num_rancombo[i]];
     } 
-    u32 check_rancombo[4] = { 0, 0, 0, 0 };
-    for (int i = 0; i < 4; i++) {
-        if (num_rancombo[i] == 0) { check_rancombo[i] = KEY_LEFT; }
-        if (num_rancombo[i] == 1) { check_rancombo[i] = KEY_UP; }
-        if (num_rancombo[i] == 2) { check_rancombo[i] = KEY_RIGHT; }
-        if (num_rancombo[i] == 3) { check_rancombo[i] = KEY_DOWN; }
+    for (int i = 0; i < 5; i++) {
+        check_rancombo[i] = rancombo_inputs[num_rancombo[i]];
     }
-    int depth = 0; //How far we have gotten into the button combination, like, how many buttons have been pressed so far, how *deep* we are
+    int depth = 0; //How far in we are, how many buttons have been pressed so far, how *deep* we are
 
     while (true) {
         int temp_c = cur_c;
-        u16 cur_color = COLOR_WHITE;
-        switch (depth) {
-            case 0:
-                for (int i = 0; i < 4; i++) {
-                    d0k3_buttoncombo_print_chars(temp_c, cur_r, cur_color, print_rancombo[i]);
-                    temp_c += 4*FONT_WIDTH;
-                }
-                break;
-            
-            case 1:
-                cur_color = COLOR_GREEN;
-                for (int i = 0; i < 4; i++) {
-                    d0k3_buttoncombo_print_chars(temp_c, cur_r, cur_color, print_rancombo[i]);
-                    temp_c += 4*FONT_WIDTH;
-                    if (i == 0) { cur_color = COLOR_WHITE; }
-                }
-                break;
-
-            case 2:
-                cur_color = COLOR_GREEN;
-                for (int i = 0; i < 4; i++) {
-                    d0k3_buttoncombo_print_chars(temp_c, cur_r, cur_color, print_rancombo[i]);
-                    temp_c += 4*FONT_WIDTH; //3 for our printout ('<', 'arrow', '>'), and one for the space that follows it
-                    if (i == 1) { cur_color = COLOR_WHITE; }
-                }
-                break;
-
-            case 3:
-                cur_color = COLOR_GREEN;
-                for (int i = 0; i < 4; i++) {
-                    d0k3_buttoncombo_print_chars(temp_c, cur_r, cur_color, print_rancombo[i]);
-                    temp_c += 4*FONT_WIDTH;
-                    if (i == 2) { cur_color = COLOR_WHITE; }
-                }
-                break;
+        u16 cur_color = COLOR_GREEN;
+        for (int i = 0; i < 5; i++) {
+            if (i >= depth) { cur_color = COLOR_WHITE; }
+            d0k3_buttoncombo_print_chars(temp_c, cur_r, cur_color, print_rancombo[i]);
+            temp_c += 4*FONT_WIDTH; //3 for our printout ('<', 'arrow', '>'), and one for the space that follows it
         }
         
         scanKeys();
@@ -249,13 +217,11 @@ bool d0k3_buttoncombo(int cur_c, int cur_r)
                 depth = 0;
             }
         }
-        
-        if (depth == 4) {
-            int temp_c = cur_c;
-            for (int i = 0; i < 4; i++) {
-                d0k3_buttoncombo_print_chars(temp_c, cur_r, COLOR_GREEN, print_rancombo[i]);
-                temp_c += 4*FONT_WIDTH;
-            }
+
+        // this is sorta hacky but otherwise the A button doesnt go green
+        if (depth == 5) {
+            depth++;
+        } else if (depth == 6) {
             return true;
         }
     }
