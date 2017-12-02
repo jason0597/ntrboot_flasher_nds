@@ -69,17 +69,12 @@ void DrawString(u16* screen, int x, int y, u16 color, const char *str)
             break;
         }
 
-        if ((x + FONT_WIDTH) <= SCREENWIDTH) 
-        {
-            DrawCharacter(screen, str[i], x, y, color);
-        } 
-        else 
+        if ((x + FONT_WIDTH) > SCREENWIDTH) 
         {
             x = startx;
             y += FONT_HEIGHT;
-            DrawCharacter(screen, str[i], x, y, color);
-            continue;
         }
+        DrawCharacter(screen, str[i], x, y, color);
         x += FONT_WIDTH;
     }
 }
