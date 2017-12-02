@@ -34,10 +34,9 @@ void WaitPress(u32 KEY) {
     while (true) { scanKeys(); if (keysDown() & KEY) { break; } }
 }
 
-void menu_lvl1(Flashcart* cart, bool isDevMode) 
+void menu_lvl1(Flashcart* cart, NTRCard *card, bool isDevMode)
 {
     u32 menu_sel = 0;
-    NTRCard card(nullptr); 
     DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); 
     DrawHeader(BOTTOM_SCREEN, "Flashcart info", ((SCREENWIDTH - (14*FONT_WIDTH)) / 2));
     DrawStringF(BOTTOM_SCREEN, FONT_WIDTH , FONT_HEIGHT*2, COLOR_WHITE, "%s\n%s", flashcart_list->at(0)->getAuthor(), flashcart_list->at(0)->getDescription()); 
@@ -64,16 +63,16 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
         if (keysDown() & KEY_A) 
         {
             cart = flashcart_list->at(menu_sel); //Set the cart equal to whatever we had selected from before
-            card.state(NTRState::Key2); 
+            card->state(NTRState::Key2); 
 
-            if (!cart->initialize(&card)) //If cart initialization fails, do all this and then break to main menu
+            if (!cart->initialize(card)) //If cart initialization fails, do all this and then break to main menu
             { 
                 DrawString(TOP_SCREEN, FONT_WIDTH, 7*FONT_HEIGHT, COLOR_RED, "Flashcart setup failed!\nPress <B>");
                 while (true) { scanKeys(); if (keysDown() & KEY_B) { DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); break; } }
             }
             else 
             {
-                menu_lvl2(cart, isDevMode); //There is a while loop over at menu_lvl2(), the statements underneath won't get executed immediately
+                menu_lvl2(cart, card, isDevMode); //There is a while loop over at menu_lvl2(), the statements underneath won't get executed immediately
                 DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); 
                 reprintFlag = true;
             }
@@ -88,7 +87,7 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
     }
 }
 
-void menu_lvl2(Flashcart* cart, bool isDevMode)
+void menu_lvl2(Flashcart* cart, NTRCard card, bool isDevMode)
 {
     DrawHeader(TOP_SCREEN, cart->getName(), ((SCREENWIDTH - (strlen(cart->getName()) * FONT_WIDTH)) / 2)); 
     int menu_sel = 0;
@@ -156,7 +155,6 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 
 //Will print out a gm9/sb9si like "input button combo to continue" prompt, also does the button checking for it
 //Requires #include <ctime> for the rand() seed
-
 const char rancombo_symbols[5] = {'\x1B', '\x18', '\x1A', '\x19', 'A'}; // Left, Up, Right, Down
 const u32 rancombo_inputs[5] = {KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_A};
 
