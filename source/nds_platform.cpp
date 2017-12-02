@@ -13,15 +13,15 @@ int progressCount = 0;
 namespace flashcart_core {
 	namespace platform {
 		void showProgress(std::uint32_t current, std::uint32_t total, const char *status) {
-            		if (progressCount < 1000) {
-               			progressCount++;
-               			return;
-            		} 
+            if (progressCount < 1000) {
+                progressCount++;
+                return;
+            } 
 			else {
-                		progressCount = 0;
-            		}
-            		swiWaitForVBlank();
-            		ShowProgress(BOTTOM_SCREEN, current, total, status);
+                progressCount = 0;
+            }
+            swiWaitForVBlank();
+            ShowProgress(BOTTOM_SCREEN, current, total, status);
 		}
 
 		int logMessage(log_priority priority, const char *fmt, ...) {
@@ -31,15 +31,15 @@ namespace flashcart_core {
 
 		auto getBlowfishKey(BlowfishKey key) -> const std::uint8_t(&)[0x1048] 
 		{
-            		switch (key) {
-				default:
-				case BlowfishKey::NTR:
-				    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_ntr_bin)); 
-				case BlowfishKey::B9Retail:
-				    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_retail_bin));
-				case BlowfishKey::B9Dev:
-				    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_dev_bin));
-		    	}
+            switch (key) {
+                default:
+                case BlowfishKey::NTR:
+                    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_ntr_bin)); 
+                case BlowfishKey::B9Retail:
+                    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_retail_bin));
+                case BlowfishKey::B9Dev:
+                    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_dev_bin));
+            }
 		}
 	}
 }
@@ -48,16 +48,16 @@ int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 {
 	if (!fatInitDefault()) 
 	{
-        	return 1; //Fat mount failed
-    	}
+        return 1; //Fat mount failed
+    }
 
 	//Open the file
 	FILE *FileIn = fopen((isDevMode) ? "fat:/ntrboot/boot9strap_ntr_dev.firm" : "fat:/ntrboot/boot9strap_ntr.firm", "rb");
-    	if (!FileIn) 
+    if (!FileIn) 
 	{
 		fclose(FileIn);
-        	return 2; //File opening failed
-    	}
+        return 2; //File opening failed
+    }
 
 	fseek(FileIn, 0, SEEK_END); //Go to the end of the file
 	u32 filesize = ftell(FileIn); //Now that we are at the end of the file, we can use the end as the number of bytes
@@ -97,8 +97,8 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 	if (!fatInitDefault()) 
 	{
 		delete[] Flashrom;
-        	return 1; //Fat init failed
-    	}
+        return 1; //Fat init failed
+    }
 
 	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", "wb");
 	if (!FileOut) {
