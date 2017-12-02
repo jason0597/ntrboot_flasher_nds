@@ -151,7 +151,7 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
                     DrawString(TOP_SCREEN, FONT_WIDTH, (8*FONT_HEIGHT), COLOR_WHITE, " About to dump flash!\n Enter button combination to proceed:");
                     if (d0k3_buttoncombo(10, 12)) 
                     {
-						ntrboot_return = DumpFlash(cart, isDevMode);
+						ntrboot_return = DumpFlash(cart);
                         if (ntrboot_return == 1) {
                             DrawString(TOP_SCREEN, (FONT_WIDTH), (15*FONT_HEIGHT), COLOR_WHITE, " Failed to open (or create) backup.bin file!\n Press <B> to return to main menu");
                             while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }

@@ -1,10 +1,10 @@
 #include <nds.h>
+#include <fstream>
 #include "nds_platform.h"
 #include <nds/arm9/dldi.h>
 #include <ncgcpp/ntrcard.h>
 #include "device.h"
 #include "blowfish_keys.h"
-#include <fstream>
 
 namespace {
 	const std::uint32_t dummy_blowfish_key[0x412] = {0};
@@ -39,27 +39,24 @@ int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 		//Return a 1 to menu_lvl2() if we get a failed to open file. We can then use this 1 to determine the error type
 		return 1;
 	}
-	std::streampos filesize = FileIn.tellg();
-	char *File = new char[filesize];
+	u32 filesize = FileIn.tellg();
+	char *FIRM = new char[filesize];
 	FileIn.seekg(0);
-	FileIn.read(File, filesize);
+	FileIn.read(FIRM, filesize);
 
-	//Convert the char array into a u8 array, because that's what injectNtrBoot likes
-	u8 *FIRM = new u8[filesize];
-	for (int i = 0; i <= filesize; i++) {
-		FIRM[i] = File[i];
-	}
-
-	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
+	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, reinterpret_cast<u8*>(FIRM), filesize)) {
 		FileIn.close();
 		//Same return concept as before, but in this case, a 2 means that flashing failed
 		return 2;
 	}
+
+	delete[] FIRM;
 	FileIn.close();
+
 	return 0;
 }
 
-int DumpFlash(flashcart_core::Flashcart* cart, bool isDevMode) 
+int DumpFlash(flashcart_core::Flashcart* cart) 
 {
 	u32 Flash_size = cart->getMaxLength();
 	u8 *Flashrom = new u8[Flash_size];
@@ -71,12 +68,8 @@ int DumpFlash(flashcart_core::Flashcart* cart, bool isDevMode)
 		return 1;
 	}
 
-	char *Array_to_write = new char[Flash_size];
-	for (u32 i = 0; i <= Flash_size; i++) {
-		Array_to_write[i] = Flashrom[i];
-	}
-
-	FileOut.write(Array_to_write, Flash_size);
+	FileOut.write(reinterpret_cast<const char *>(Flashrom), Flash_size); //fucking write() and its const char* requirements
+	delete[] Flashrom;
 	FileOut.close();
 
 	return 0;
