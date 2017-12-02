@@ -15,8 +15,8 @@ int main(void)
 	scanKeys();																				                //This is so that noobs don't do a dev flash by accident
 	if (keysHeld() & KEY_START && keysHeld() & KEY_SELECT && keysHeld() & KEY_X) { isDevMode = true; }		//And it's not hard too get a dev flash if you wanted to
 
-	NTRCard *card(nullptr);
-    Flashcart *cart = nullptr; //We define our main cart variable right here, and we will pass it along from function to function until the very end
+	Flashcart *cart = nullptr; //We define our main cart variable right here, and we will pass it along from function to function until the very end
+    NTRCard *card = nullptr; //Same with our card variable
 
 	print_boot_msg();
 

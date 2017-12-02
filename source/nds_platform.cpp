@@ -73,6 +73,7 @@ int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 	fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
 
 	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
+		delete[] FIRM;
 		fclose(FileIn);
 		return 4; //FIRM injection failed
 	}

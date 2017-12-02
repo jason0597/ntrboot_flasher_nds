@@ -72,7 +72,7 @@ void menu_lvl1(Flashcart* cart, NTRCard *card, bool isDevMode)
             }
             else 
             {
-                menu_lvl2(cart, card, isDevMode); //There is a while loop over at menu_lvl2(), the statements underneath won't get executed immediately
+                menu_lvl2(cart, isDevMode); //There is a while loop over at menu_lvl2(), the statements underneath won't get executed immediately
                 DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); 
                 reprintFlag = true;
             }
@@ -87,7 +87,7 @@ void menu_lvl1(Flashcart* cart, NTRCard *card, bool isDevMode)
     }
 }
 
-void menu_lvl2(Flashcart* cart, NTRCard card, bool isDevMode)
+void menu_lvl2(Flashcart* cart, bool isDevMode)
 {
     DrawHeader(TOP_SCREEN, cart->getName(), ((SCREENWIDTH - (strlen(cart->getName()) * FONT_WIDTH)) / 2)); 
     int menu_sel = 0;
