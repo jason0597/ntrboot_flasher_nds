@@ -58,3 +58,4 @@ u32 GetDrawStringWidth(const char *str);
 void ShowString(u16 *screen, const char* format, ...);
 
 void DrawHeader(u16* screen, const char *str, int offset);
+void ShowProgress(u16 *screen, uint32_t current, uint32_t total, const char* status);

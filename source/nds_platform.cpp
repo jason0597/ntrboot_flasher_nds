@@ -5,15 +5,29 @@
 #include <ncgcpp/ntrcard.h>
 #include "device.h"
 #include "blowfish_keys.h"
+#include "font.h"
+#include "ui.h"
 
 namespace {
 	const std::uint32_t dummy_blowfish_key[0x412] = {0};
 }
 
+int progressCount = 0;
+
 namespace flashcart_core {
 	namespace platform {
 		void showProgress(std::uint32_t current, std::uint32_t total, const char *status) {
-			static_cast<void>(current); static_cast<void>(total); static_cast<void>(status);
+            if (progressCount < 1000) {
+                progressCount++;
+                return;
+            } else {
+                progressCount = 0;
+            }
+            swiWaitForVBlank();
+            ShowProgress(BOTTOM_SCREEN, current, total, status);
+            //ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
+            //DrawString(BOTTOM_SCREEN, FONT_WIDTH, FONT_HEIGHT*4, COLOR_WHITE, status);
+            //DrawRectangle(BOTTOM_SCREEN, FONT_WIDTH, FONT_HEIGHT*6, SCREENWIDTH-FONT_HEIGHT * ((float)current/(float)total), FONT_HEIGHT, COLOR_GREEN);
 		}
 
 		int logMessage(log_priority priority, const char *fmt, ...) {
