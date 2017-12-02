@@ -176,3 +176,38 @@ void ShowString(u16 *screen, const char *format, ...) {
     ClearScreen(screen, STD_COLOR_BG);
     DrawString(screen, x, y, STD_COLOR_FONT, str);
 }
+
+// blatantly stolen progress routine
+void ShowProgress(u16 *screen, uint32_t current, uint32_t total, const char* status)
+{
+    const uint8_t bar_width = SCREEN_WIDTH - FONT_WIDTH;
+    const uint8_t bar_height = 12;
+    const uint16_t bar_pos_x = (SCREEN_WIDTH - bar_width) / 2;
+    const uint16_t bar_pos_y = (SCREEN_HEIGHT / 2) - (bar_height / 2);
+    const uint16_t text_pos_x = bar_pos_x + (bar_width/2) - (FONT_WIDTH*2);
+    const uint16_t text_pos_y = bar_pos_y + 1;
+
+    static uint32_t last_prog_width = 1;
+    uint32_t prog_width = ((total > 0) && (current <= total)) ? (current * (bar_width-4)) / total : 0;
+    uint32_t prog_percent = ((total > 0) && (current <= total)) ? (current * 100) / total : 0;
+
+    DrawString(screen, bar_pos_x, bar_pos_y - FONT_HEIGHT - 4, STD_COLOR_FONT, status);
+
+    // draw the initial outline
+    if (current == 0 || last_prog_width > prog_width)
+    {
+        ClearScreen(screen, STD_COLOR_BG);
+        DrawRectangle(screen, bar_pos_x, bar_pos_y, bar_width, bar_height, STD_COLOR_FONT);
+        DrawRectangle(screen, bar_pos_x + 1, bar_pos_y + 1, bar_width - 2, bar_height - 2, STD_COLOR_BG);
+    }
+
+    // only draw the rectangle if it's changed.
+    if (current == 0 || last_prog_width != prog_width)
+    {
+        DrawRectangle(screen, bar_pos_x + 1, bar_pos_y + 1, bar_width - 2, bar_height - 2, STD_COLOR_BG); // Clear the progress bar before re-rendering.
+        DrawRectangle(screen, bar_pos_x + 2, bar_pos_y + 2, prog_width, bar_height - 4, COLOR_GREEN);
+        DrawStringF(screen, text_pos_x, text_pos_y, STD_COLOR_FONT, "%3lu%%", prog_percent);
+    }
+
+    last_prog_width = prog_width;
+}
