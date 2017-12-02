@@ -23,8 +23,15 @@ namespace flashcart_core {
 
 		auto getBlowfishKey(BlowfishKey key) -> const std::uint8_t(&)[0x1048] 
 		{
-			return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_retail_bin));
-			//For now, this is hardcoded to retail B9S blowfish key. TODO: Make it so that it returns the correct key depending on isDevMode
+            switch (key) {
+                default:
+                case BlowfishKey::NTR:
+                    // return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_ntr_bin)); we don't have this?
+                case BlowfishKey::B9Retail:
+                    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_retail_bin));
+                case BlowfishKey::B9Dev:
+                    return *static_cast<const std::uint8_t(*)[0x1048]>(static_cast<const void *>(blowfish_dev_bin));
+            }
 		}
 	}
 }
