@@ -5,8 +5,7 @@ using namespace flashcart_core;
 using namespace ncgc;
 
 void print_boot_msg(void);
-void sd_mount_fail(void);
-void cart_failed(void);
+void WaitPress(u32 KEY);
 void menu_lvl1(Flashcart* cart, bool isDevMode);
 void menu_lvl2(Flashcart* cart, bool isDevMode);
 bool d0k3_buttoncombo(int cur_c, int cur_r);

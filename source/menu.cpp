@@ -30,16 +30,8 @@ void print_boot_msg(void)
     }
 }
 
-void sd_mount_fail(void) 
-{
-    DrawString(TOP_SCREEN, 10*FONT_WIDTH, 10*FONT_HEIGHT, COLOR_WHITE, "SD mounting failed!\nPress <B> to exit");
-    while (true) { scanKeys(); if (keysDown() & KEY_B) { exit(0); } }
-}
-
-void cart_failed(void) 
-{
-    DrawString(TOP_SCREEN, 10*FONT_WIDTH, 10*FONT_HEIGHT, COLOR_WHITE, "Cart failed!\nPress <B> to exit");
-    while (true) { scanKeys(); if (keysDown() & KEY_B) { exit(0); } }
+void WaitPress(u32 KEY) {
+    while (true) { scanKeys(); if (keysDown() & KEY) { break; } }
 }
 
 void menu_lvl1(Flashcart* cart, bool isDevMode) 
@@ -100,9 +92,8 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 {
     DrawHeader(TOP_SCREEN, cart->getName(), ((SCREENWIDTH - (strlen(cart->getName()) * FONT_WIDTH)) / 2)); 
     int menu_sel = 0;
-    bool breakCondition = false;
 
-    while (!breakCondition) //We are using (!breakCondition) and not (true) because we need to be able to break out of the loop inside case statements (where `break;` breaks out of the case, not the loop)
+    while (true)
     { 
         scanKeys();
         DrawString(TOP_SCREEN, FONT_WIDTH, (2 * FONT_HEIGHT), (menu_sel == 0) ? COLOR_RED : COLOR_WHITE, "Inject FIRM");	//0
@@ -117,61 +108,49 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
         }
         if (keysDown() & KEY_B) 
         {
-            breakCondition = true;
+            break;
         }
         int ntrboot_return = 0;
-        if (keysDown() & KEY_A) 
+        //1: fat mount failed, 2: file open failed, 3: file read/write failed, 4: inject/dump failed
+        if (keysDown() & KEY_A)
         {
-            switch (menu_sel) {
-                case 0:
-                    DrawString(TOP_SCREEN, FONT_WIDTH, (8*FONT_HEIGHT), COLOR_WHITE, " About to inject FIRM!\n Enter button combination to proceed:");
-                    if (d0k3_buttoncombo(10, 12)) 
-                    {
-						ntrboot_return = InjectFIRM(cart, isDevMode);
-                        if (ntrboot_return == 1) {
-                            DrawString(TOP_SCREEN, (FONT_WIDTH), (15*FONT_HEIGHT), COLOR_WHITE, " Failed to open FIRM file!\n Press <B> to return to main menu");
-                            while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }
-                        }
-                        if (ntrboot_return == 2) {
-                            DrawString(TOP_SCREEN, (FONT_WIDTH), (15*FONT_HEIGHT), COLOR_WHITE, " Failed to inject FIRM to flashcart!\n Press <B> to return to main menu");
-                            while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }
-                        }
-                    }
-                    else 
-                    {
-                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (14*FONT_HEIGHT), COLOR_WHITE, "Stopped by user...\nPress <B> to return to main menu");
-                        while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }    
-                    }
-                    DrawString(TOP_SCREEN, (2*FONT_WIDTH), (18*FONT_HEIGHT), COLOR_WHITE, "FIRM flash sucessful!\nPress <B> to return to main menu");
-                    while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }  
-                    breakCondition = true;
-                    break;
-                
-                case 1:
-                    DrawString(TOP_SCREEN, FONT_WIDTH, (8*FONT_HEIGHT), COLOR_WHITE, " About to dump flash!\n Enter button combination to proceed:");
-                    if (d0k3_buttoncombo(10, 12)) 
-                    {
-						ntrboot_return = DumpFlash(cart);
-                        if (ntrboot_return == 1) {
-                            DrawString(TOP_SCREEN, (FONT_WIDTH), (15*FONT_HEIGHT), COLOR_WHITE, " Failed to open (or create) backup.bin file!\n Press <B> to return to main menu");
-                            while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }
-                        }
-                        if (ntrboot_return == 2) {
-                            DrawString(TOP_SCREEN, (FONT_WIDTH), (15*FONT_HEIGHT), COLOR_WHITE, " Failed to dump flash!\n Press <B> to return to main menu");
-                            while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }
-                        }
-                    }
-                    else 
-                    {
-                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (14*FONT_HEIGHT), COLOR_WHITE, "Stopped by user...\nPress <B> to return to main menu");
-                        while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }
-                    }
-                    DrawString(TOP_SCREEN, (2*FONT_WIDTH), (18*FONT_HEIGHT), COLOR_WHITE, "Flash dump sucessful!\nPress <B> to return to main menu");
-                    while (true) { scanKeys(); if (keysDown() & KEY_B) { break; } }  
-                    breakCondition = true;
-                    break;
+            DrawString(TOP_SCREEN, (2*FONT_WIDTH), (8*FONT_HEIGHT), COLOR_WHITE, (menu_sel == 0) ? "About to inject FIRM!\nEnter button combination to proceed:" : "About to dump flash!\nEnter button combination to proceed:");
+            if (d0k3_buttoncombo(10*FONT_WIDTH, 12*FONT_HEIGHT)) 
+            {
+                ntrboot_return = (menu_sel == 0) ? InjectFIRM(cart, isDevMode) : DumpFlash(cart);
+                switch (ntrboot_return) {
+                    case 1:
+                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, "Failed to mount fat!\nPress <B> to return to menu...");
+                        WaitPress(KEY_B);
+                        ClearScreen(TOP_SCREEN, COLOR_BLACK);
+                        break;
+                    
+                    case 2:
+                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, "Failed to open file!\nPress <B> to return to menu...");
+                        WaitPress(KEY_B);
+                        ClearScreen(TOP_SCREEN, COLOR_BLACK);
+                        break;
+
+                    case 3:
+                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to read file!\nPress <B> to return to menu..." : "Failed to write file!\nPress <B> to return to menu...");
+                        WaitPress(KEY_B);
+                        ClearScreen(TOP_SCREEN, COLOR_BLACK);
+                        break;
+
+                    case 4:
+                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to inject FIRM!\nPress <B> to return to menu..." : "Failed to dump flash!\nPress <B> to return to menu...");
+                        WaitPress(KEY_B);
+                        ClearScreen(TOP_SCREEN, COLOR_BLACK);
+                        break;
+                }
             }
-        }
+            else 
+            {
+                DrawString(TOP_SCREEN, (2*FONT_WIDTH), (14*FONT_HEIGHT), COLOR_WHITE, "Stopped by user...\nPress <B> to return to main menu");
+                WaitPress(KEY_B);    
+            }
+            break;
+        }  
     }
 }
 
@@ -183,7 +162,6 @@ const u32 rancombo_inputs[5] = {KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_A};
 
 bool d0k3_buttoncombo(int cur_c, int cur_r) 
 {
-    cur_c *= FONT_WIDTH; cur_r *= FONT_HEIGHT;
     srand(time(NULL));
     int num_rancombo[5] = { (rand() % 4), (rand() % 4), (rand() % 4), (rand() % 4), 4 }; // zero based, '4' is the 5th item (A)
     char print_rancombo[5] = { ' ', ' ', ' ', ' ', ' ' };

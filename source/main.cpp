@@ -1,8 +1,7 @@
 #include <nds.h>
 #include "device.h"
-#include "menu.h"
-#include <fat.h>
 #include "ui.h"
+#include "menu.h"
 
 using namespace flashcart_core;
 using namespace ncgc;
@@ -17,17 +16,6 @@ int main(void)
 	if (keysHeld() & KEY_START && keysHeld() & KEY_SELECT && keysHeld() & KEY_X) { isDevMode = true; }		//And it's not hard too get a dev flash if you wanted to
 
     Flashcart *cart = nullptr; //We define our main cart variable right here, and we will pass it along from function to function until the very end
-
-    if (!fatInitDefault()) 
-	{
-		sd_mount_fail();
-	}
-    /* if (!cart) 
-	{
-		// should not happen
-		//Something failed!
-		cart_failed();
-	} */
 
 	print_boot_msg();
 
