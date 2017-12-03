@@ -31,27 +31,13 @@ ARCH	:=	-mthumb -mthumb-interwork
 CFLAGS	:=	-g -Wall -O0 -Wno-unused-result\
  		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
 		-ffast-math \
+		-DNTRBOOT_FLASHER_NDS_VERSION=\"$(NTRBOOT_FLASHER_NDS_VERSION)\"\
+		-DFLASHCART_CORE_VERSION=\"$(FLASHCART_CORE_VERSION)\"\
 		-DNCGC_PLATFORM_NTR \
 		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
-
-ifneq ($(strip $(DEBUG_DUMP)),)
-	CFLAGS += -DDEBUG_DUMP=$(DEBUG_DUMP)
-	CXXFLAGS += -DDEBUG_DUMP=$(DEBUG_DUMP)
-endif
-
-ifneq ($(strip $(DEBUG_PRINT)),)
-	CFLAGS += -DDEBUG_PRINT=$(DEBUG_PRINT)
-	CXXFLAGS += -DDEBUG_PRINT=$(DEBUG_PRINT)
-endif
-
-ifneq ($(strip $(NDSI_MODE)),)
-	CFLAGS += -DNDSI_MODE
-	CXXFLAGS += -DNDSI_MODE
-	TARGET := $(TARGET)_dsi
-endif
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
@@ -80,6 +66,9 @@ export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+
+export NTRBOOT_FLASHER_NDS_VERSION := $(shell git describe --always --tags)
+export FLASHCART_CORE_VERSION := $(shell git -C external/flashcart_core describe --always --tags)
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
