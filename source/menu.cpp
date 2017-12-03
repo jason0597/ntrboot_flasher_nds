@@ -79,7 +79,7 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
             if (!cart->initialize(&card)) //If cart initialization fails, do all this and then break to main menu
             { 
                 DrawString(TOP_SCREEN, FONT_WIDTH, 8*FONT_HEIGHT, COLOR_RED, "Flashcart setup failed!\nPress <B>");
-                while (true) { scanKeys(); if (keysDown() & KEY_B) { DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); break; } }
+                while (true) { scanKeys(); if (keysDown() & KEY_B) { DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); DrawInfo(global_loglevel); break; } }
             }
             else 
             {
