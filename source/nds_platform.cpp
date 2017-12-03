@@ -9,6 +9,7 @@
 #include "ui.h"
 #include <cstdio>
 #include <cstdarg>
+#include <sys/stat.h>
 
 int progressCount = 0;
 
@@ -32,7 +33,7 @@ namespace flashcart_core {
 			static bool first_open = true;
 			if (!fatInitDefault()) { return -1; }
 
-			//mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
+			mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
 
 			// Overwrite if this is our first time opening the file.
 			FILE *logfile = fopen("fat:/ntrboot/ntrboot.log", first_open ? "w" : "a");
@@ -132,7 +133,7 @@ int DumpFlash(flashcart_core::Flashcart* cart)
         return 1; //Fat init failed
     }
 
-	//mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
+	mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
 
 	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", "wb");
 	if (!FileOut) {
