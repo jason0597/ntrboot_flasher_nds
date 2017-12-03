@@ -126,7 +126,7 @@ $(BUILD): $(LIBNCGC)/lib/libncgc.a
 clean:
 	@echo clean ...
 	@$(MAKE) clean -C $(LIBNCGC)
-	@rm -fr $(BUILD) $(TARGET)*.elf $(TARGET)*.nds
+	@rm -fr $(BUILD) $(TARGET)*.elf $(TARGET)*.nds external/libncgc/lib
 
 #---------------------------------------------------------------------------------
 else

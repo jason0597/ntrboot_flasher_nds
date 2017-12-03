@@ -8,8 +8,11 @@
 #include "font.h"
 #include "ui.h"
 #include <cstdio>
+#include <cstdarg>
 
+int loglevel = 1; //https://github.com/ntrteam/flashcart_core/blob/master/platform.h#L6
 int progressCount = 0;
+
 namespace flashcart_core {
 	namespace platform {
 		void showProgress(std::uint32_t current, std::uint32_t total, const char *status) {
@@ -24,9 +27,37 @@ namespace flashcart_core {
             ShowProgress(BOTTOM_SCREEN, current, total, status);
 		}
 
-		int logMessage(log_priority priority, const char *fmt, ...) {
-			static_cast<void>(priority); static_cast<void>(fmt);
-			return -1;
+		int logMessage(log_priority priority, const char *fmt, ...) 
+		{
+			if (priority < loglevel) return 0;
+
+			static bool first_open = true;
+			if (!fatInitDefault()) { return -1; }
+			// Overwrite if this is our first time opening the file.
+			FILE *logfile = fopen("fat:/ntrboot/ntrboot.log", first_open ? "w" : "a");
+			if (!logfile) { return -1; }
+			first_open = false;
+
+			va_list args;
+			va_start(args, fmt);
+
+			const char *priority_str;
+			if (priority == 0) { priority_str = "DEBUG"; }
+			if (priority == 1) { priority_str = "INFO"; }
+			if (priority == 2) { priority_str = "NOTICE"; }
+			if (priority == 3) { priority_str = "WARN"; }
+			if (priority == 4) { priority_str = "ERROR"; }
+			if (priority >= 5) { priority_str = "?!#$"; }
+
+			char string_to_write[100]; //just do 100, should be enough for any kind of log message we get...
+			sprintf(string_to_write, "[%s]: %s\n", priority_str, fmt);
+
+			int result = vfprintf(logfile, string_to_write, args);
+			fclose(logfile);
+			fatUnmount("fat:/");
+			va_end(args);
+
+			return result;
 		}
 
 		auto getBlowfishKey(BlowfishKey key) -> const std::uint8_t(&)[0x1048] 

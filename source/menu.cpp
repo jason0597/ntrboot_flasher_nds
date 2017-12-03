@@ -65,10 +65,9 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
         {
             cart = flashcart_list->at(menu_sel); //Set the cart equal to whatever we had selected from before
             card.state(NTRState::Key2); 
-
             if (!cart->initialize(&card)) //If cart initialization fails, do all this and then break to main menu
             { 
-                DrawString(TOP_SCREEN, FONT_WIDTH, 7*FONT_HEIGHT, COLOR_RED, "Flashcart setup failed!\nPress <B>");
+                DrawString(TOP_SCREEN, FONT_WIDTH, 8*FONT_HEIGHT, COLOR_RED, "Flashcart setup failed!\nPress <B>");
                 while (true) { scanKeys(); if (keysDown() & KEY_B) { DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); break; } }
             }
             else 
@@ -93,7 +92,8 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
     DrawHeader(TOP_SCREEN, cart->getName(), ((SCREENWIDTH - (strlen(cart->getName()) * FONT_WIDTH)) / 2)); 
     int menu_sel = 0;
 
-    while (true)
+    bool breakCondition = false;
+    while (!breakCondition)
     { 
         scanKeys();
         DrawString(TOP_SCREEN, FONT_WIDTH, (2 * FONT_HEIGHT), (menu_sel == 0) ? COLOR_RED : COLOR_WHITE, "Inject FIRM");	//0
@@ -108,7 +108,7 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
         }
         if (keysDown() & KEY_B) 
         {
-            break;
+            breakCondition = true;
         }
         int ntrboot_return = 0;
         //1: fat mount failed, 2: file open failed, 3: file read/write failed, 4: inject/dump failed
@@ -118,6 +118,7 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
             if (d0k3_buttoncombo(10*FONT_WIDTH, 12*FONT_HEIGHT)) 
             {
                 ntrboot_return = (menu_sel == 0) ? InjectFIRM(cart, isDevMode) : DumpFlash(cart);
+                ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
                 switch (ntrboot_return) {
                     case 1:
                         DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, "Failed to mount fat!\nPress <B> to return to menu...");
@@ -141,6 +142,14 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
                         DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to inject FIRM!\nPress <B> to return to menu..." : "Failed to dump flash!\nPress <B> to return to menu...");
                         WaitPress(KEY_B);
                         ClearScreen(TOP_SCREEN, COLOR_BLACK);
+                        break;
+
+                    case 0:
+                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, "Success! Press <B> to return to main menu");
+                        WaitPress(KEY_B);
+                        ClearScreen(TOP_SCREEN, COLOR_BLACK);
+                        ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
+                        breakCondition = true;
                         break;
                 }
             }
