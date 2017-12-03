@@ -86,6 +86,19 @@ void DrawHeader(u16* screen, const char *str, int offset)
     DrawString(screen, offset, 0, COLOR_WHITE, str);
 }
 
+void DrawInfo(int loglevel) {
+    DrawRectangle(TOP_SCREEN, 0, 172, 256, 20, COLOR_LIGHTGREY);
+    DrawStringF(TOP_SCREEN, 0, 172, COLOR_BLACK, "ntrboot_flasher_nds: %s\nflashcart_core: %s", NTRBOOT_FLASHER_NDS_VERSION, FLASHCART_CORE_VERSION); 
+    DrawString(TOP_SCREEN, 154, 172, COLOR_BLACK, "<Y> Change loglvl");
+    const char *loglevel_str;
+    if (loglevel == 0) { loglevel_str = "DEBUG"; }
+	if (loglevel == 1) { loglevel_str = "INFO"; }
+	if (loglevel == 2) { loglevel_str = "NOTICE"; }
+	if (loglevel == 3) { loglevel_str = "WARN"; }
+	if (loglevel == 4) { loglevel_str = "ERROR"; }
+    DrawStringF(TOP_SCREEN, 154, 182, COLOR_BLACK, "Log level: %s", loglevel_str);
+}
+
 void DrawStringF(u16 *screen, int x, int y, u16 color, const char *format, ...) 
 {
     char str[256];

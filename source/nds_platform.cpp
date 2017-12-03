@@ -10,7 +10,6 @@
 #include <cstdio>
 #include <cstdarg>
 
-int loglevel = 1; //https://github.com/ntrteam/flashcart_core/blob/master/platform.h#L6
 int progressCount = 0;
 
 namespace flashcart_core {
@@ -28,10 +27,13 @@ namespace flashcart_core {
 
 		int logMessage(log_priority priority, const char *fmt, ...) 
 		{
-			if (priority < loglevel) return 0;
+			if (priority < global_loglevel) return 0;
 
 			static bool first_open = true;
 			if (!fatInitDefault()) { return -1; }
+
+			//mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
+
 			// Overwrite if this is our first time opening the file.
 			FILE *logfile = fopen("fat:/ntrboot/ntrboot.log", first_open ? "w" : "a");
 			if (!logfile) { return -1; }
@@ -129,6 +131,8 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 		delete[] Flashrom;
         return 1; //Fat init failed
     }
+
+	//mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
 
 	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", "wb");
 	if (!FileOut) {

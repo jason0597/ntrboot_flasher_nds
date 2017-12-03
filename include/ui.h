@@ -51,5 +51,8 @@ void DrawStringF(u16 *screen, int x, int y, u16 color, const char *format, ...);
 
 void ShowProgress(u16 *screen, uint32_t current, uint32_t total, const char* status);
 void DrawHeader(u16* screen, const char *str, int offset);
+void DrawInfo(int loglevel);
 
-
+extern int global_loglevel; //Because ui.h is included in all .cpp files, we can share this variable around where it's needed
+//We declare it as extern here, we declare it again in menu.cpp where it's primarily used, and then we can access it
+//The reason for all this is because we change the loglevel in menu.cpp, and the loglevel variable is required in nds_platform.cpp (for logMessage())

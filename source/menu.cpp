@@ -10,6 +10,8 @@
 using namespace flashcart_core;
 using namespace ncgc;
 
+int global_loglevel = 1; //https://github.com/ntrteam/flashcart_core/blob/master/platform.h#L6 
+
 void print_boot_msg(void) 
 {
     ClearScreen(TOP_SCREEN, COLOR_RED);
@@ -38,6 +40,7 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
     u32 menu_sel = 0;
     NTRCard card(nullptr); 
     DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); 
+    DrawInfo(global_loglevel);
     DrawHeader(BOTTOM_SCREEN, "Flashcart info", ((SCREENWIDTH - (14*FONT_WIDTH)) / 2));
     DrawStringF(BOTTOM_SCREEN, FONT_WIDTH , FONT_HEIGHT*2, COLOR_WHITE, "%s\n%s", flashcart_list->at(0)->getAuthor(), flashcart_list->at(0)->getDescription()); 
 
@@ -60,6 +63,15 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
             menu_sel--;
             reprintFlag = true;
         }
+        if (keysDown() & KEY_Y) {
+            if (global_loglevel == 4) {
+                global_loglevel = 0;
+            }
+            else {
+                global_loglevel++;
+            }
+            DrawInfo(global_loglevel);
+        }
         if (keysDown() & KEY_A) 
         {
             cart = flashcart_list->at(menu_sel); //Set the cart equal to whatever we had selected from before
@@ -72,7 +84,8 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
             else 
             {
                 menu_lvl2(cart, isDevMode); //There is a while loop over at menu_lvl2(), the statements underneath won't get executed immediately
-                DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2)); 
+                DrawHeader(TOP_SCREEN, "Select flashcart", ((SCREENWIDTH - (16*FONT_WIDTH)) / 2));
+                DrawInfo(global_loglevel); 
                 reprintFlag = true;
             }
         }
