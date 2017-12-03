@@ -1,12 +1,11 @@
+#include "menu.h"
 #include <nds.h>
 #include "ui.h"
-#include "font.h"
-#include "menu.h"
-#include "nds_platform.h"
-#include "../flashcart_core/device.h"
-#include <ncgcpp/ntrcard.h>
+#define FONT_WIDTH  6
+#define FONT_HEIGHT 10
+#include "nds_platform.h" 
+#include "device.h"
 #include <ctime>
-#include <nds/arm9/dldi.h>
 
 using namespace flashcart_core;
 using namespace ncgc;
@@ -117,8 +116,8 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
             DrawString(TOP_SCREEN, (2*FONT_WIDTH), (8*FONT_HEIGHT), COLOR_WHITE, (menu_sel == 0) ? "About to inject FIRM!\nEnter button combination to proceed:" : "About to dump flash!\nEnter button combination to proceed:");
             if (d0k3_buttoncombo(10*FONT_WIDTH, 12*FONT_HEIGHT)) 
             {
-                ntrboot_return = (menu_sel == 0) ? InjectFIRM(cart, isDevMode) : DumpFlash(cart);
                 ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
+                ntrboot_return = (menu_sel == 0) ? InjectFIRM(cart, isDevMode) : DumpFlash(cart);
                 switch (ntrboot_return) {
                     case 1:
                         DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, "Failed to mount fat!\nPress <B> to return to menu...");
@@ -145,7 +144,7 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
                         break;
 
                     case 0:
-                        DrawString(TOP_SCREEN, (2*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_RED, "Success! Press <B> to return to main menu");
+                        DrawString(TOP_SCREEN, (1*FONT_WIDTH), (15*FONT_HEIGHT), COLOR_GREEN, "Success! Press <B> to return to main menu");
                         WaitPress(KEY_B);
                         ClearScreen(TOP_SCREEN, COLOR_BLACK);
                         ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);

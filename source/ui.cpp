@@ -1,5 +1,5 @@
-#include <nds.h>
 #include "ui.h"
+#include <nds.h>
 #include "font.h"
 #include <stdarg.h>
 #include <stdio.h>

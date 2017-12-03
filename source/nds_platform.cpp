@@ -1,11 +1,11 @@
+#include "nds_platform.h"
 #include <nds.h>
 #include <nds/arm9/dldi.h>
 #include <fat.h>
-#include "nds_platform.h"
 #include "device.h"
-#include <ncgcpp/ntrcard.h>
 #include "blowfish_keys.h"
-#include "font.h"
+#define FONT_WIDTH  6
+#define FONT_HEIGHT 10
 #include "ui.h"
 #include <cstdio>
 #include <cstdarg>
@@ -23,7 +23,6 @@ namespace flashcart_core {
 			else {
                 progressCount = 0;
             }
-            swiWaitForVBlank();
             ShowProgress(BOTTOM_SCREEN, current, total, status);
 		}
 
