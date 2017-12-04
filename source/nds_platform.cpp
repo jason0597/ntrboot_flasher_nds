@@ -166,6 +166,7 @@ int DumpFlash(flashcart_core::Flashcart* cart)
         delete[] Flashrom;
         fclose(FileOut);
         fatUnmount("fat:/");
+        chunkOffset += chunkSize;
     }
 
 
