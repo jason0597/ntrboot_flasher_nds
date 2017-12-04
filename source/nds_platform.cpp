@@ -122,6 +122,7 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 	u32 Flash_size = cart->getMaxLength(); //Get the flashrom size
     int chunk = 0;
     u32 chunkSize = 0x4000; // chunk out to avoid ram limitations
+    u32 chunkOffset = 0;
     int totalChunks = Flash_size/chunkSize;
 
     if (!fatInitDefault()) 
@@ -136,7 +137,7 @@ int DumpFlash(flashcart_core::Flashcart* cart)
     for (chunk=0; chunk < totalChunks; chunk++) {
 
 	    u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
-        if (!cart->readFlash(0, chunkSize, Flashrom)) {
+        if (!cart->readFlash(chunkOffset, chunkSize, Flashrom)) {
             delete[] Flashrom;
             return 4; //Flash reading failed
         }
