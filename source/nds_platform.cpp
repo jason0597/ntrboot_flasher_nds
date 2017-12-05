@@ -120,9 +120,7 @@ int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 int DumpFlash(flashcart_core::Flashcart* cart) 
 {
 	u32 Flash_size = cart->getMaxLength(); //Get the flashrom size
-    int chunk = 0;
     u32 chunkSize = 0x4000; // chunk out to avoid ram limitations
-    u32 chunkOffset = 0;
     int totalChunks = Flash_size/chunkSize;
 
     if (!fatInitDefault()) 
@@ -136,10 +134,10 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 
 	u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
 
-    for (chunk=0; chunk < totalChunks; chunk++) {
+    for (u32 chunkOffset = 0; chunkOffset < Flash_size; chunkOffset += chunkSize) {
 
         DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, SCREEN_WIDTH, FONT_HEIGHT, COLOR_BLACK);
-        DrawStringF(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, COLOR_WHITE, "Reading chunk 0x%x", chunk);
+        DrawStringF(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, COLOR_WHITE, "Reading at 0x%x", chunkOffset);
 
         if (!cart->readFlash(chunkOffset, chunkSize, Flashrom)) {
             delete[] Flashrom;
@@ -152,7 +150,7 @@ int DumpFlash(flashcart_core::Flashcart* cart)
             return 1; //Fat init failed
         }
 
-    	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", chunk == 0 ? "wb" : "ab");
+    	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", chunkOffset == 0 ? "wb" : "ab");
         if (!FileOut) {
             delete[] Flashrom;
             fclose(FileOut);
@@ -169,7 +167,6 @@ int DumpFlash(flashcart_core::Flashcart* cart)
         
         fclose(FileOut);
         fatUnmount("fat:/");
-        chunkOffset += chunkSize;
     }
 
 
