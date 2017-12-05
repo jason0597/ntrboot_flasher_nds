@@ -169,8 +169,8 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 		fatUnmount("fat:/");
 	}
 
-	//Draw empty chars over the old printout to clear the "reading at..." message
-	DrawString(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - FONT_HEIGHT * 2, COLOR_WHITE, "                    ");
+	//Draw a black rectangle over the old "Reading at..." message to clear it away
+	DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - 2 * FONT_HEIGHT, 20 * FONT_WIDTH, FONT_HEIGHT, COLOR_BLACK);
 
 	delete[] Flashrom;
 	return 0;
