@@ -1,5 +1,6 @@
 *.elf
 *.nds
 .vscode
+.vs
 build/
 maker.sh
