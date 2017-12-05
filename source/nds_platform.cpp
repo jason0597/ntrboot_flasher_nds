@@ -134,12 +134,13 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 
 	fatUnmount("fat:/");
 
+	u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
+
     for (chunk=0; chunk < totalChunks; chunk++) {
 
         DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, SCREEN_WIDTH, FONT_HEIGHT, COLOR_BLACK);
         DrawStringF(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, COLOR_WHITE, "Reading chunk 0x%x", chunk);
 
-	    u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
         if (!cart->readFlash(chunkOffset, chunkSize, Flashrom)) {
             delete[] Flashrom;
             return 4; //Flash reading failed
@@ -166,12 +167,12 @@ int DumpFlash(flashcart_core::Flashcart* cart)
             return 3; //File writing failed
         }
         
-        delete[] Flashrom;
         fclose(FileOut);
         fatUnmount("fat:/");
         chunkOffset += chunkSize;
     }
 
 
+    delete[] Flashrom;
 	return 0;
 }
