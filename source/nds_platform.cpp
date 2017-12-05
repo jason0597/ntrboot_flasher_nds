@@ -28,7 +28,7 @@ namespace flashcart_core {
 
 		int logMessage(log_priority priority, const char *fmt, ...)
 		{
-			if (priority < global_loglevel) return 0;
+			if (priority < global_loglevel) { return 0; }
 
 			static bool first_open = true;
 			if (!fatInitDefault()) { return -1; }
@@ -44,6 +44,7 @@ namespace flashcart_core {
 			va_start(args, fmt);
 
 			const char *priority_str;
+			//I use a bunch of if statements here because the array that has strings over at ntrboot_flasher's `platform.cpp` is not available here
 			if (priority == 0) { priority_str = "DEBUG"; }
 			if (priority == 1) { priority_str = "INFO"; }
 			if (priority == 2) { priority_str = "NOTICE"; }
@@ -121,7 +122,6 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 {
 	u32 Flash_size = cart->getMaxLength(); //Get the flashrom size
 	u32 chunkSize = 0x80000; // chunk out in half megabyte chunks out to avoid ram limitations
-	int totalChunks = Flash_size / chunkSize;
 
 	if (!fatInitDefault())
 	{
@@ -169,8 +169,8 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 		fatUnmount("fat:/");
 	}
 
-	//Draw empty chars over the old printout to remove the "reading at..." message
-	DrawString(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - FONT_HEIGHT * 2, COLOR_WHITE, "                    ", chunkOffset);
+	//Draw empty chars over the old printout to clear the "reading at..." message
+	DrawString(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - FONT_HEIGHT * 2, COLOR_WHITE, "                    ");
 
 	delete[] Flashrom;
 	return 0;

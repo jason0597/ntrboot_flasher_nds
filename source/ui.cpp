@@ -92,6 +92,7 @@ void DrawInfo(int loglevel)
 	DrawStringF(TOP_SCREEN, 0, SCREEN_HEIGHT - FONT_HEIGHT * 3, COLOR_BLACK, "ntrboot_flasher_nds: %s\nflashcart_core: %s", NTRBOOT_FLASHER_NDS_VERSION, FLASHCART_CORE_VERSION);
 	DrawString(TOP_SCREEN, 0, SCREEN_HEIGHT - FONT_HEIGHT, COLOR_BLACK, "<Y> Change log level");
 	const char *loglevel_str;
+	//I use a bunch of if statements here because the array that has strings over at ntrboot_flasher's `platform.cpp` is not available here
 	if (loglevel == 0) { loglevel_str = "DEBUG"; }
 	if (loglevel == 1) { loglevel_str = "INFO"; }
 	if (loglevel == 2) { loglevel_str = "NOTICE"; }
@@ -129,7 +130,7 @@ void DrawStringF(u16 *screen, int x, int y, u16 color, const char *format, ...)
 	}
 }
 
-// blatantly stolen progress routine
+//https://github.com/ntrteam/ntrboot_flasher/blob/master/source/common/ui.cpp#L201
 void ShowProgress(u16 *screen, uint32_t current, uint32_t total, const char* status)
 {
 	const uint8_t bar_width = SCREEN_WIDTH - FONT_WIDTH;
