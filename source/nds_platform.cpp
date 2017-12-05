@@ -120,39 +120,56 @@ int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 int DumpFlash(flashcart_core::Flashcart* cart) 
 {
 	u32 Flash_size = cart->getMaxLength(); //Get the flashrom size
-	u8 *Flashrom = new u8[Flash_size]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
+    u32 chunkSize = 0x4000; // chunk out to avoid ram limitations
+    int totalChunks = Flash_size/chunkSize;
 
-	if (!cart->readFlash(0, Flash_size, Flashrom)) {
-		delete[] Flashrom;
-		return 4; //Flash reading failed
-	}
-
-	if (!fatInitDefault()) 
+    if (!fatInitDefault()) 
 	{
-		delete[] Flashrom;
         return 1; //Fat init failed
     }
 
 	mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
 
-	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", "wb");
-	if (!FileOut) {
-		delete[] Flashrom;
-		fclose(FileOut);
-		fatUnmount("fat:/");
-		return 2; //File opening failed
-	}
-
-	if (fwrite (Flashrom, 1, Flash_size, FileOut) != Flash_size) {
-		delete[] Flashrom;
-		fclose(FileOut);
-		fatUnmount("fat:/");
-		return 3; //File writing failed
-	}
-	
-	delete[] Flashrom;
-	fclose(FileOut);
 	fatUnmount("fat:/");
 
+	u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
+
+    for (u32 chunkOffset = 0; chunkOffset < Flash_size; chunkOffset += chunkSize) {
+
+        DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, SCREEN_WIDTH, FONT_HEIGHT, COLOR_BLACK);
+        DrawStringF(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT-FONT_HEIGHT*2, COLOR_WHITE, "Reading at 0x%x", chunkOffset);
+
+        if (!cart->readFlash(chunkOffset, chunkSize, Flashrom)) {
+            delete[] Flashrom;
+            return 4; //Flash reading failed
+        }
+
+        if (!fatInitDefault()) 
+        {
+            delete[] Flashrom;
+            return 1; //Fat init failed
+        }
+
+    	FILE *FileOut = fopen("fat:/ntrboot/backup.bin", chunkOffset == 0 ? "wb" : "ab");
+        if (!FileOut) {
+            delete[] Flashrom;
+            fclose(FileOut);
+            fatUnmount("fat:/");
+            return 2; //File opening failed
+        }
+
+        if (fwrite (Flashrom, 1, chunkSize, FileOut) != chunkSize) {
+            delete[] Flashrom;
+            fclose(FileOut);
+            fatUnmount("fat:/");
+            return 3; //File writing failed
+        }
+        
+        fclose(FileOut);
+        fatUnmount("fat:/");
+    }
+
+
+    delete[] Flashrom;
 	return 0;
 }
