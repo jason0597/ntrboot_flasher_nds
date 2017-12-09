@@ -28,7 +28,7 @@ INCLUDES	:=	include external/flashcart_core
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O0 -Wno-unused-result\
+CFLAGS	:=	-g -Wall -O2 -Wno-unused-result\
  		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
 		-ffast-math \
 		-DNTRBOOT_FLASHER_NDS_VERSION=\"$(NTRBOOT_FLASHER_NDS_VERSION)\"\
