@@ -104,8 +104,7 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 	DrawHeader(TOP_SCREEN, cart->getName(), ((SCREENWIDTH - (strlen(cart->getName()) * FONT_WIDTH)) / 2));
 	int menu_sel = 0;
 
-	bool breakCondition = false;
-	while (!breakCondition)
+	while (true)
 	{
 		scanKeys();
 		DrawString(TOP_SCREEN, FONT_WIDTH, (2 * FONT_HEIGHT), (menu_sel == 0) ? COLOR_RED : COLOR_WHITE, "Inject FIRM");	//0
@@ -157,11 +156,10 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 					break;
 
 				case 0:
-					DrawString(TOP_SCREEN, (1 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_GREEN, "Success! Press <B> to return to main menu");
-					WaitPress(KEY_B);
+					DrawString(TOP_SCREEN, (1 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_GREEN, "Success! Press <A> to return to main menu");
+					WaitPress(KEY_A);
 					ClearScreen(TOP_SCREEN, COLOR_BLACK);
 					ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
-					breakCondition = true;
 					break;
 				}
 			}
