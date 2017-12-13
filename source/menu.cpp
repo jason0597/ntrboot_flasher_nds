@@ -119,7 +119,7 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 		}
 		if (keysDown() & KEY_B)
 		{
-			breakCondition = true;
+			break;
 		}
 		int ntrboot_return = 0;
 		//1: fat mount failed, 2: file open failed, 3: file read/write failed, 4: inject/dump failed
