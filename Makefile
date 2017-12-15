@@ -39,6 +39,11 @@ CFLAGS	:=	-g -Wall -O2 -Wno-unused-result\
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
+ifneq ($(strip $(testing)),)
+	CFLAGS += -DTESTING=1
+	CXXFLAGS += -DTESTING=1
+endif
+
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
