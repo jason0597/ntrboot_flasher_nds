@@ -3,7 +3,7 @@
 #include <nds/arm9/dldi.h>
 #include <fat.h>
 #include "device.h"
-#include "blowfish_keys.h"
+#include "binaries.h"
 #define FONT_WIDTH  6
 #define FONT_HEIGHT 10
 #include "ui.h"
@@ -80,41 +80,41 @@ namespace flashcart_core {
 
 int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 {
-	if (!fatInitDefault())
+	if (!fatInitDefault()) { return 1; /*Fat mount failed*/ }
+	
+	bool injection_source = false; //false = grab from binaries.h, true = use the .firm from the SD card
+
+	if (FILE *FileIn = fopen((isDevMode) ? "fat:/ntrboot/flashcart_payload_dev.firm" : "fat:/ntrboot/flashcart_payload.firm", "rb")) //If fi
 	{
-		return 1; //Fat mount failed
-	}
+		fseek(FileIn, 0, SEEK_END); //Go to the end of the file
+		u32 filesize = ftell(FileIn); //Now that we are at the end of the file, we can use the end as the number of bytes
+		u8 *FIRM = new u8[filesize]; //Make our new array to store the FIRM from the SD card
+		fseek(FileIn, 0, SEEK_SET); //Go to the start of the file because we are going to read it from start to finish in the next line
 
-	//Open the file
-	FILE *FileIn = fopen((isDevMode) ? "fat:/ntrboot/boot9strap_ntr_dev.firm" : "fat:/ntrboot/boot9strap_ntr.firm", "rb");
-	if (!FileIn)
-	{
+		if (fread(FIRM, 1, filesize, FileIn) != filesize) {
+			delete[] FIRM;
+			fclose(FileIn);
+			return 3; //File reading failed
+		}
 		fclose(FileIn);
-		return 2; //File opening failed
+		injection_source = true;
 	}
-
-	fseek(FileIn, 0, SEEK_END); //Go to the end of the file
-	u32 filesize = ftell(FileIn); //Now that we are at the end of the file, we can use the end as the number of bytes
-	u8 *FIRM = new u8[filesize]; //Make our new array to store the FIRM from the SD card
-	fseek(FileIn, 0, SEEK_SET); //Go to the start of the file because we are going to read it from start to finish in the next line
-
-	if (fread(FIRM, 1, filesize, FileIn) != filesize) {
-		delete[] FIRM;
-		fclose(FileIn);
-		return 3; //File reading failed
+	else { 
+		logMessage(LOG_INFO, "ntrboot_flasher_nds: File opening failed! Resorting to b9s_ntr v1.3...");
+		fclose(FileIn); 
 	}
 
 	fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
 
-	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
+	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, 
+							 (injection_source) ? FIRM : boot9strap_ntr_firm, 
+							 (injection_source) ? filesize : boot9strap_ntr_firm_size)) 
+	{
 		delete[] FIRM;
-		fclose(FileIn);
 		return 4; //FIRM injection failed
 	}
 
 	delete[] FIRM;
-	fclose(FileIn);
-
 	return 0;
 }
 
