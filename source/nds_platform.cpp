@@ -80,16 +80,18 @@ namespace flashcart_core {
 
 int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 {
-	if (!fatInitDefault()) { return 1; /*Fat mount failed*/ }
+	if (!fatInitDefault()) { return 1; } //Fat mount failed
 	
-	bool injection_source = false; //false = grab from binaries.h, true = use the .firm from the SD card
+	u32 filesize; //Used in line 93, has to be declared outside the if statement
 
-	if (FILE *FileIn = fopen((isDevMode) ? "fat:/ntrboot/flashcart_payload_dev.firm" : "fat:/ntrboot/flashcart_payload.firm", "rb")) //If fi
-	{
+	//Check if flashcart_payload.firm exists, If it exists, then do everything below
+	//If it doesn't exist, then else{}, and check if isDevMode is true. If it is true, return. If it isn't true, do firm injection with the fallback firm in binaries.h
+	if (FILE *FileIn = fopen("fat:/ntrboot/flashcart_payload.firm", "rb")) 
+	{ 
 		fseek(FileIn, 0, SEEK_END); //Go to the end of the file
-		u32 filesize = ftell(FileIn); //Now that we are at the end of the file, we can use the end as the number of bytes
-		u8 *FIRM = new u8[filesize]; //Make our new array to store the FIRM from the SD card
+		filesize = ftell(FileIn); //Now that we are at the end of the file, we can use the end as the number of bytes
 		fseek(FileIn, 0, SEEK_SET); //Go to the start of the file because we are going to read it from start to finish in the next line
+		u8 *FIRM = new u8[filesize]; //Make our new array to store the FIRM from the SD card
 
 		if (fread(FIRM, 1, filesize, FileIn) != filesize) {
 			delete[] FIRM;
@@ -97,25 +99,24 @@ int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 			return 3; //File reading failed
 		}
 		fclose(FileIn);
-		injection_source = true;
-	}
-	else { 
-		logMessage(LOG_INFO, "ntrboot_flasher_nds: File opening failed! Resorting to b9s_ntr v1.3...");
-		fclose(FileIn); 
-	}
+		fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
 
-	fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
-
-	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, 
-							 (injection_source) ? FIRM : boot9strap_ntr_firm, 
-							 (injection_source) ? filesize : boot9strap_ntr_firm_size)) 
-	{
+		if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
+			delete[] FIRM;
+			return 4; //FIRM injection failed
+		}
 		delete[] FIRM;
-		return 4; //FIRM injection failed
+		return 0;
 	}
+	else { //If flashcart_payload.firm doesn't exist 
+		if (isDevMode) { return 2; } //In the case of isDevMode, we have to quit right here, because there is no fallback in binaries.cpp for it to rely. return 2 will make menu.cpp print "file reading failed!"
 
-	delete[] FIRM;
-	return 0;
+		fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
+		if (!cart->injectNtrBoot(blowfish_retail_bin, boot9strap_ntr_firm, boot9strap_ntr_firm_size)) {
+			return 4; //FIRM injection failed
+		}
+		return 0;
+	}
 }
 
 int DumpFlash(flashcart_core::Flashcart* cart)
