@@ -78,14 +78,42 @@ namespace flashcart_core {
 	}
 }
 
+bool file_exists(const char* filename) {
+    if (FILE* file = fopen(filename, "r")) {
+        fclose(file);
+        return true;
+    } else {
+		return false;
+	}
+}
+
+static char* calculate_backup_path(const char *cart_name) {
+    int path_len = snprintf(NULL, 0, "fat:/ntrboot/%s-backup.bin", cart_name) + 1;
+    char *path = (char *)malloc(path_len);
+    snprintf(path, path_len, "fat:/ntrboot/%s-backup.bin", cart_name);
+    return path;
+}
+
 return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 {
 	if (!fatInitDefault()) { return FAT_MOUNT_FAILED; } //Fat mount failed
 	
+	char* backup_path = calculate_backup_path(cart->getShortName());
+
+	if (!file_exists(backup_path)) {
+		fatUnmount("fat:/");
+		free(backup_path);
+		return NO_BACKUP_FOUND;
+	}
+
 	u32 filesize; //Used later on
 
 	FILE *FileIn = fopen("fat:/ntrboot/flashcart_payload.firm", "rb");
-	if (!FileIn) { return FILE_OPEN_FAILED; }
+	if (!FileIn) { 
+		fatUnmount("fat:/");
+		free(backup_path);
+		return FILE_OPEN_FAILED; 
+	}
 	fseek(FileIn, 0, SEEK_END);
 	filesize = ftell(FileIn); 
 	fseek(FileIn, 0, SEEK_SET); 
@@ -95,6 +123,7 @@ return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 		delete[] FIRM;
 		fclose(FileIn);
 		fatUnmount("fat:/");
+		free(backup_path);
 		return FILE_IO_FAILED; //File reading failed
 	}
 	fclose(FileIn);
@@ -102,8 +131,11 @@ return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 
 	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
 		delete[] FIRM;
+		free(backup_path);
 		return INJECT_OR_DUMP_FAILED; //FIRM injection failed
 	}
+
+	free(backup_path);
 	delete[] FIRM;
 	return ALL_OK;
 }
@@ -119,6 +151,8 @@ return_codes_t DumpFlash(flashcart_core::Flashcart* cart)
 
 	fatUnmount("fat:/");
 
+	char* backup_path = calculate_backup_path(cart->getShortName());
+
 	u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
 
 	for (u32 chunkOffset = 0; chunkOffset < Flash_size; chunkOffset += chunkSize) {
@@ -127,20 +161,23 @@ return_codes_t DumpFlash(flashcart_core::Flashcart* cart)
 
 		if (!cart->readFlash(chunkOffset, chunkSize, Flashrom)) {
 			delete[] Flashrom;
+			free(backup_path);
 			return INJECT_OR_DUMP_FAILED; //Flash reading failed
 		}
 
 		if (!fatInitDefault())
 		{
 			delete[] Flashrom;
+			free(backup_path);
 			return FAT_MOUNT_FAILED; //Fat init failed
 		}
 
-		FILE *FileOut = fopen("fat:/ntrboot/backup.bin", chunkOffset == 0 ? "wb" : "ab");
+		FILE *FileOut = fopen(backup_path, chunkOffset == 0 ? "wb" : "ab");
 		if (!FileOut) {
 			delete[] Flashrom;
 			fclose(FileOut);
 			fatUnmount("fat:/");
+			free(backup_path);
 			return FILE_OPEN_FAILED; //File opening failed
 		}
 
@@ -148,6 +185,7 @@ return_codes_t DumpFlash(flashcart_core::Flashcart* cart)
 			delete[] Flashrom;
 			fclose(FileOut);
 			fatUnmount("fat:/");
+			free(backup_path);
 			return FILE_IO_FAILED; //File writing failed
 		}
 
@@ -158,6 +196,7 @@ return_codes_t DumpFlash(flashcart_core::Flashcart* cart)
 	//Draw a black rectangle over the old "Reading at..." message to clear it away
 	DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - 2 * FONT_HEIGHT, 20 * FONT_WIDTH, FONT_HEIGHT, COLOR_BLACK);
 
+	free(backup_path);
 	delete[] Flashrom;
 	return ALL_OK;
 }

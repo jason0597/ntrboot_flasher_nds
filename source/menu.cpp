@@ -171,6 +171,12 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 						ClearScreen(TOP_SCREEN, COLOR_BLACK);
 						break;
 
+					case NO_BACKUP_FOUND:
+						DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, "No backup file found!\nMake sure you dumped the flash first!\nPress <B> to return to menu...");
+						WaitPress(KEY_B);
+						ClearScreen(TOP_SCREEN, COLOR_BLACK);
+						break;
+
 					case ALL_OK:
 						DrawString(TOP_SCREEN, (1 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_GREEN, "Success! Press <A> to return to main menu");
 						WaitPress(KEY_A);
