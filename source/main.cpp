@@ -9,7 +9,7 @@ using namespace ncgc;
 int main(void)
 {
 	sysSetBusOwners(true, true); //Give ARM9 access to the cart
-	InitializeScreens(); //Self-explanatory
+	InitializeScreens(); 
 
 	bool isDevMode = false;																					//Hold START/SELECT/X on boot to enable dev flashing
 	scanKeys();																				                //This is so that noobs don't do a dev flash by accident

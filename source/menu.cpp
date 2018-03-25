@@ -7,6 +7,16 @@
 #include "device.h"
 #include <ctime>
 
+#define bootmsg "\n WARNING: READ THIS BEFORE CONTINUING\n" 			\
+				" ------------------------------------\n\n" 			\
+				" If you don't know what you're doing: STOP\n" 			\
+				" Open your browser to https://3ds.guide/\n" 			\
+				" and follow the steps provided there.\n\n" 			\
+				" This software writes directly to your\n" 				\
+				" flashcart. It's possible you may BRICK \n"			\
+				" your flashcart.\n\n ALWAYS KEEP A BACKUP\n\n" 		\
+				" <A> CONTINUE  <B> POWEROFF"
+
 using namespace flashcart_core;
 using namespace ncgc;
 
@@ -15,7 +25,7 @@ int global_loglevel = 1; //https://github.com/ntrteam/flashcart_core/blob/master
 void print_boot_msg(void)
 {
 	ClearScreen(TOP_SCREEN, COLOR_RED);
-	DrawString(TOP_SCREEN, 0, 0, COLOR_WHITE, "\n WARNING: READ THIS BEFORE CONTINUING\n ------------------------------------\n\n If you don't know what you're doing: STOP\n Open your browser to https://3ds.guide/\n and follow the steps provided there.\n\n This software writes directly to your\n flashcart. It's possible you may BRICK \n your flashcart.\n\n ALWAYS KEEP A BACKUP\n\n <A> CONTINUE  <B> POWEROFF");
+	DrawString(TOP_SCREEN, 0, 0, COLOR_WHITE, bootmsg);
 
 	while (true)
 	{
@@ -65,7 +75,7 @@ void menu_lvl1(Flashcart* cart, bool isDevMode)
 		}
 		if (keysDown() & KEY_Y) {
 			if (global_loglevel == 4) {
-				global_loglevel = 0;
+				global_loglevel = 0; //if you scroll past the end it puts you back at the top
 			}
 			else {
 				global_loglevel++;
@@ -122,46 +132,52 @@ void menu_lvl2(Flashcart* cart, bool isDevMode)
 			break;
 		}
 		int ntrboot_return = 0;
-		//1: fat mount failed, 2: file open failed, 3: file read/write failed, 4: inject/dump failed
+		
 		if (keysDown() & KEY_A)
 		{
 			DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (8 * FONT_HEIGHT), COLOR_WHITE, (menu_sel == 0) ? "About to inject FIRM!\nEnter button combination to proceed:" : "About to dump flash!\nEnter button combination to proceed:");
 			if (d0k3_buttoncombo(10 * FONT_WIDTH, 12 * FONT_HEIGHT))
 			{
 				ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
-				ntrboot_return = (menu_sel == 0) ? InjectFIRM(cart, isDevMode) : DumpFlash(cart);
-				switch (ntrboot_return) {
-				case 1:
-					DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, "Failed to mount fat!\nPress <B> to return to menu...");
-					WaitPress(KEY_B);
-					ClearScreen(TOP_SCREEN, COLOR_BLACK);
-					break;
-
-				case 2:
-					DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, "Failed to open file!\nPress <B> to return to menu...");
-					WaitPress(KEY_B);
-					ClearScreen(TOP_SCREEN, COLOR_BLACK);
-					break;
-
-				case 3:
-					DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to read file!\nPress <B> to return to menu..." : "Failed to write file!\nPress <B> to return to menu...");
-					WaitPress(KEY_B);
-					ClearScreen(TOP_SCREEN, COLOR_BLACK);
-					break;
-
-				case 4:
-					DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to inject FIRM!\nPress <B> to return to menu..." : "Failed to dump flash!\nPress <B> to return to menu...");
-					WaitPress(KEY_B);
-					ClearScreen(TOP_SCREEN, COLOR_BLACK);
-					break;
-
-				case 0:
-					DrawString(TOP_SCREEN, (1 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_GREEN, "Success! Press <A> to return to main menu");
-					WaitPress(KEY_A);
-					ClearScreen(TOP_SCREEN, COLOR_BLACK);
-					ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
-					break;
+				if (menu_sel == 0) {
+					ntrboot_return = InjectFIRM(cart, isDevMode);
+				} 
+				else {
+					ntrboot_return = DumpFlash(cart);
 				}
+
+				switch (ntrboot_return) {
+					case FAT_MOUNT_FAILED:
+						DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, "Failed to mount fat!\nPress <B> to return to menu...");
+						WaitPress(KEY_B);
+						ClearScreen(TOP_SCREEN, COLOR_BLACK);
+						break;
+
+					case FILE_OPEN_FAILED:
+						DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, "Failed to open file!\nPress <B> to return to menu...");
+						WaitPress(KEY_B);
+						ClearScreen(TOP_SCREEN, COLOR_BLACK);
+						break;
+
+					case FILE_IO_FAILED:
+						DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to read file!\nPress <B> to return to menu..." : "Failed to write file!\nPress <B> to return to menu...");
+						WaitPress(KEY_B);
+						ClearScreen(TOP_SCREEN, COLOR_BLACK);
+						break;
+
+					case INJECT_OR_DUMP_FAILED:
+						DrawString(TOP_SCREEN, (2 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_RED, (menu_sel == 0) ? "Failed to inject FIRM!\nPress <B> to return to menu..." : "Failed to dump flash!\nPress <B> to return to menu...");
+						WaitPress(KEY_B);
+						ClearScreen(TOP_SCREEN, COLOR_BLACK);
+						break;
+
+					case ALL_OK:
+						DrawString(TOP_SCREEN, (1 * FONT_WIDTH), (15 * FONT_HEIGHT), COLOR_GREEN, "Success! Press <A> to return to main menu");
+						WaitPress(KEY_A);
+						ClearScreen(TOP_SCREEN, COLOR_BLACK);
+						ClearScreen(BOTTOM_SCREEN, COLOR_BLACK);
+						break;
+					}
 			}
 			else
 			{

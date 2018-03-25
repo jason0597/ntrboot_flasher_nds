@@ -78,56 +78,42 @@ namespace flashcart_core {
 	}
 }
 
-int InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
+return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 {
-	if (!fatInitDefault()) { return 1; } //Fat mount failed
+	if (!fatInitDefault()) { return FAT_MOUNT_FAILED; } //Fat mount failed
 	
-	u32 filesize; //Used in line 93, has to be declared outside the if statement
+	u32 filesize; //Used later on
 
-	//Check if flashcart_payload.firm exists, If it exists, then do everything below
-	//If it doesn't exist, then else{}, and check if isDevMode is true. If it is true, return. If it isn't true, do firm injection with the fallback firm in binaries.h
-	if (FILE *FileIn = fopen("fat:/ntrboot/flashcart_payload.firm", "rb")) 
-	{ 
-		fseek(FileIn, 0, SEEK_END); //Go to the end of the file
-		filesize = ftell(FileIn); //Now that we are at the end of the file, we can use the end as the number of bytes
-		fseek(FileIn, 0, SEEK_SET); //Go to the start of the file because we are going to read it from start to finish in the next line
-		u8 *FIRM = new u8[filesize]; //Make our new array to store the FIRM from the SD card
+	FILE *FileIn = fopen("fat:/ntrboot/flashcart_payload.firm", "rb");
+	if (!FileIn) { return FILE_OPEN_FAILED; }
+	fseek(FileIn, 0, SEEK_END);
+	filesize = ftell(FileIn); 
+	fseek(FileIn, 0, SEEK_SET); 
+	u8 *FIRM = new u8[filesize];
 
-		if (fread(FIRM, 1, filesize, FileIn) != filesize) {
-			delete[] FIRM;
-			fclose(FileIn);
-			return 3; //File reading failed
-		}
-		fclose(FileIn);
-		fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
-
-		if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
-			delete[] FIRM;
-			return 4; //FIRM injection failed
-		}
+	if (fread(FIRM, 1, filesize, FileIn) != filesize) {
 		delete[] FIRM;
-		return 0;
+		fclose(FileIn);
+		fatUnmount("fat:/");
+		return FILE_IO_FAILED; //File reading failed
 	}
-	else { //If flashcart_payload.firm doesn't exist 
-		if (isDevMode) { return 2; } //In the case of isDevMode, we have to quit right here, because there is no fallback in binaries.cpp for it to rely. return 2 will make menu.cpp print "file reading failed!"
+	fclose(FileIn);
+	fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
 
-		fatUnmount("fat:/"); //We must unmount *before* calling any flashcart_core functions
-		if (!cart->injectNtrBoot(blowfish_retail_bin, boot9strap_ntr_firm, boot9strap_ntr_firm_size)) {
-			return 4; //FIRM injection failed
-		}
-		return 0;
+	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
+		delete[] FIRM;
+		return INJECT_OR_DUMP_FAILED; //FIRM injection failed
 	}
+	delete[] FIRM;
+	return ALL_OK;
 }
 
-int DumpFlash(flashcart_core::Flashcart* cart)
+return_codes_t DumpFlash(flashcart_core::Flashcart* cart)
 {
 	u32 Flash_size = cart->getMaxLength(); //Get the flashrom size
-	u32 chunkSize = 0x80000; // chunk out in half megabyte chunks out to avoid ram limitations
+	const u32 chunkSize = 0x80000; // chunk out in half megabyte chunks out to avoid ram limitations
 
-	if (!fatInitDefault())
-	{
-		return 1; //Fat init failed
-	}
+	if (!fatInitDefault()) { return FAT_MOUNT_FAILED; }
 
 	mkdir("fat:/ntrboot", 0700); //If the directory exists, this line isn't going to crash the program or anything like that
 
@@ -136,19 +122,18 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 	u8 *Flashrom = new u8[chunkSize]; //Allocate a new array to store the flashrom we are about to retrieve from the flashcart
 
 	for (u32 chunkOffset = 0; chunkOffset < Flash_size; chunkOffset += chunkSize) {
-
 		DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - FONT_HEIGHT * 2, SCREEN_WIDTH, FONT_HEIGHT, COLOR_BLACK);
 		DrawStringF(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - FONT_HEIGHT * 2, COLOR_WHITE, "Reading at 0x%x", chunkOffset);
 
 		if (!cart->readFlash(chunkOffset, chunkSize, Flashrom)) {
 			delete[] Flashrom;
-			return 4; //Flash reading failed
+			return INJECT_OR_DUMP_FAILED; //Flash reading failed
 		}
 
 		if (!fatInitDefault())
 		{
 			delete[] Flashrom;
-			return 1; //Fat init failed
+			return FAT_MOUNT_FAILED; //Fat init failed
 		}
 
 		FILE *FileOut = fopen("fat:/ntrboot/backup.bin", chunkOffset == 0 ? "wb" : "ab");
@@ -156,14 +141,14 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 			delete[] Flashrom;
 			fclose(FileOut);
 			fatUnmount("fat:/");
-			return 2; //File opening failed
+			return FILE_OPEN_FAILED; //File opening failed
 		}
 
 		if (fwrite(Flashrom, 1, chunkSize, FileOut) != chunkSize) {
 			delete[] Flashrom;
 			fclose(FileOut);
 			fatUnmount("fat:/");
-			return 3; //File writing failed
+			return FILE_IO_FAILED; //File writing failed
 		}
 
 		fclose(FileOut);
@@ -174,5 +159,5 @@ int DumpFlash(flashcart_core::Flashcart* cart)
 	DrawRectangle(TOP_SCREEN, FONT_WIDTH, SCREEN_HEIGHT - 2 * FONT_HEIGHT, 20 * FONT_WIDTH, FONT_HEIGHT, COLOR_BLACK);
 
 	delete[] Flashrom;
-	return 0;
+	return ALL_OK;
 }
