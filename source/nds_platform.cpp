@@ -104,14 +104,13 @@ return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 		fatUnmount("fat:/");
 		free(backup_path);
 		return NO_BACKUP_FOUND;
-	}
+	} free(backup_path);
 
 	u32 filesize; //Used later on
 
 	FILE *FileIn = fopen("fat:/ntrboot/flashcart_payload.firm", "rb");
 	if (!FileIn) { 
 		fatUnmount("fat:/");
-		free(backup_path);
 		return FILE_OPEN_FAILED; 
 	}
 	fseek(FileIn, 0, SEEK_END);
@@ -123,7 +122,6 @@ return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 		delete[] FIRM;
 		fclose(FileIn);
 		fatUnmount("fat:/");
-		free(backup_path);
 		return FILE_IO_FAILED; //File reading failed
 	}
 	fclose(FileIn);
@@ -131,11 +129,9 @@ return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 
 	if (!cart->injectNtrBoot((isDevMode) ? blowfish_dev_bin : blowfish_retail_bin, FIRM, filesize)) {
 		delete[] FIRM;
-		free(backup_path);
 		return INJECT_OR_DUMP_FAILED; //FIRM injection failed
 	}
-
-	free(backup_path);
+	
 	delete[] FIRM;
 	return ALL_OK;
 }
