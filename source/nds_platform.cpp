@@ -106,15 +106,13 @@ return_codes_t InjectFIRM(flashcart_core::Flashcart* cart, bool isDevMode)
 		return NO_BACKUP_FOUND;
 	} free(backup_path);
 
-	u32 filesize; //Used later on
-
-	FILE *FileIn = fopen("fat:/ntrboot/flashcart_payload.firm", "rb");
+	FILE *FileIn = fopen("fat:/ntrboot/boot9strap_ntr.firm", "rb");
 	if (!FileIn) { 
 		fatUnmount("fat:/");
 		return FILE_OPEN_FAILED; 
 	}
 	fseek(FileIn, 0, SEEK_END);
-	filesize = ftell(FileIn); 
+	u32 filesize = ftell(FileIn); 
 	fseek(FileIn, 0, SEEK_SET); 
 	u8 *FIRM = new u8[filesize];
 
